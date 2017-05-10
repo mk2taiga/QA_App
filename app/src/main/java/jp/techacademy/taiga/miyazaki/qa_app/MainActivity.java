@@ -40,6 +40,7 @@ public class MainActivity extends AppCompatActivity {
     private ListView mListView;
     private ArrayList<Question> mQuestionArrayList;
     private QuestionsListAdapter mAdapter;
+    FirebaseUser user;
     //
     String uid;
 
@@ -138,7 +139,7 @@ public class MainActivity extends AppCompatActivity {
                 }
 
                 // ログイン済みのユーザーを取得する
-                FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+                user = FirebaseAuth.getInstance().getCurrentUser();
 
                 if (user == null) {
                     // ログインしていなければログイン画面に遷移させる
@@ -178,8 +179,10 @@ public class MainActivity extends AppCompatActivity {
                     mToolbar.setTitle("コンピューター");
                     mGenre = 4;
                 } else if (id == R.id.nav_like) {
-                    mToolbar.setTitle("お気に入り");
-                    mGenre = 5;
+                    if (user != null) {
+                        mToolbar.setTitle("お気に入り");
+                        mGenre = 5;
+                    }
                 }
 
                 DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
