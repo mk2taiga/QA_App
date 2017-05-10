@@ -27,12 +27,6 @@ public class QuestionDetailActivity extends AppCompatActivity implements View.On
 
     private DatabaseReference mAnswerRef;
 
-    //ボタンの宣言
-    Button likeButton;
-    Like mLike;
-    DatabaseReference mDatabaseReference;
-    DatabaseReference likeRef;
-
     private ChildEventListener mEventListener = new ChildEventListener() {
         @Override
         public void onChildAdded(DataSnapshot dataSnapshot, String s) {
@@ -83,7 +77,6 @@ public class QuestionDetailActivity extends AppCompatActivity implements View.On
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_question_detail);
 
-
         // 渡ってきたQuestionのオブジェクトを保持する
         Bundle extras = getIntent().getExtras();
         mQuestion = (Question) extras.get("question");
@@ -99,24 +92,16 @@ public class QuestionDetailActivity extends AppCompatActivity implements View.On
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
         fab.setOnClickListener(this);
 
-        likeButton = (Button) findViewById(R.id.likeButton);
-        likeButton.setOnClickListener(this);
-
         DatabaseReference dataBaseReference = FirebaseDatabase.getInstance().getReference();
         mAnswerRef = dataBaseReference.child(Const.ContentsPATH).child(String.valueOf(mQuestion.getGenre())).child(mQuestion.getQuestionUid()).child(Const.AnswersPATH);
         mAnswerRef.addChildEventListener(mEventListener);
 
-    }
 
+    }
     @Override
     public void onClick(View v) {
-        if (v.getId() == R.id.fab) {
             showFab();
-        }else if (v.getId() == R.id.likeButton) {
-            saveLike();
-        }
     }
-
     public void showFab(){
         // ログイン済みのユーザーを収録する
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
@@ -129,39 +114,6 @@ public class QuestionDetailActivity extends AppCompatActivity implements View.On
             Intent intent = new Intent(getApplicationContext(), AnswerSendActivity.class);
             intent.putExtra("question", mQuestion);
             startActivity(intent);
-
         }
-    }
-
-    public void saveLike(){
-        //Likesというテーブルを使って、いいねを押した、クエスチョンのデータを丸々保存する
-        //保存のイメージは、Likesというテーブルの中にユーザーidカラムを配置、その下にそのユーザーが、お気に入りしたcontentsを保存していくようにと考えました。
-        String uid = FirebaseAuth.getInstance().getCurrentUser().getUid();
-        mDatabaseReference = FirebaseDatabase.getInstance().getReference();
-        likeRef = mDatabaseReference.child(Const.LikesPATH).child(uid);
-
-        Map<String, String> data = new HashMap<String, String>();
-
-        int genre = mQuestion.getGenre();
-        String title = mQuestion.getTitle();
-        String body = mQuestion.getBody();
-        String name = mQuestion.getName();
-        String questionUid = mQuestion.getQuestionUid();
-
-        data.put("genre", String.valueOf(genre));
-        data.put("question", questionUid);
-        data.put("title", title);
-        data.put("body", body);
-        data.put("name", name);
-
-        byte[] bytes = mQuestion.getImageBytes();
-        if (bytes == null) {
-            data.put("image", String.valueOf(bytes));
-        }
-
-        likeRef.push().setValue(data, this);
-
-        likeButton.setText("いいね済み");
-
     }
 }
