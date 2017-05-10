@@ -4,6 +4,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 
 public class Like implements Serializable{
+    private String mLikeUid;
     private String mTitle;
     private String mBody;
     private String mName;

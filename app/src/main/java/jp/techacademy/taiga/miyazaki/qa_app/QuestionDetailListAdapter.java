@@ -3,6 +3,7 @@ package jp.techacademy.taiga.miyazaki.qa_app;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.util.Base64;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -13,15 +14,17 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 
+import java.io.ByteArrayOutputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class QuestionDetailListAdapter extends BaseAdapter{
+public class QuestionDetailListAdapter extends BaseAdapter {
 
     private final static int TYPE_QUESTION = 0;
     private final static int TYPE_ANSWER = 1;
@@ -32,6 +35,7 @@ public class QuestionDetailListAdapter extends BaseAdapter{
     Button likeButton;
     DatabaseReference mDatabaseReference;
     DatabaseReference likeRef;
+    String questionUid;
     String uid;
     String name;
     String body;
@@ -83,6 +87,7 @@ public class QuestionDetailListAdapter extends BaseAdapter{
             }
             //追加
             title = mQustion.getTitle();
+            questionUid = mQustion.getQuestionUid();
             //
             bytes = mQustion.getImageBytes();
             body = mQustion.getBody();
@@ -104,28 +109,32 @@ public class QuestionDetailListAdapter extends BaseAdapter{
                     mDatabaseReference = FirebaseDatabase.getInstance().getReference();
                     likeRef = mDatabaseReference.child(Const.LikesPATH).child(uid);
 
-                    Map<String, String> data = new HashMap<String, String>();
-
-                    data.put("title", title);
-                    data.put("body", body);
-                    data.put("name", name);
-
-                    if (bytes != null) {
-                        data.put("image", String.valueOf(bytes));
-                    }
-
-
-                    likeRef.push().setValue(data, this);
-
-                    //とりあえず
                     if (flag == false) {
+                        Map<String, String> data = new HashMap<String, String>();
+
+                        data.put("title", title);
+                        data.put("body", body);
+                        data.put("name", name);
+                        data.put("uid", uid);
+                        data.put("question", questionUid);
+
+                        if (bytes != null) {
+                            Bitmap bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.length).copy(Bitmap.Config.ARGB_8888, true);
+                            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                            bitmap.compress(Bitmap.CompressFormat.JPEG, 80, baos);
+                            String bitmapString = Base64.encodeToString(baos.toByteArray(), Base64.DEFAULT);
+                            data.put("image", bitmapString);
+                        }
+
+                        likeRef.push().setValue(data);
                         likeButton.setText("いいね!済み");
                         flag = true;
+
                     }else if (flag == true) {
+                        likeRef.removeValue();
                         likeButton.setText("いいね!");
-                        flag = false;
+                        flag =false;
                     }
-                    Log.d("testjeva", "これはテストです。");
                 }
             });
             //ここまで
@@ -153,5 +162,4 @@ public class QuestionDetailListAdapter extends BaseAdapter{
 
         return convertView;
     }
-
 }
