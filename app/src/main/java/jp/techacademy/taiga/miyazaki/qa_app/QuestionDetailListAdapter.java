@@ -15,14 +15,12 @@ import android.widget.TextView;
 
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
-import com.google.firebase.auth.api.model.StringList;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 
 import java.io.ByteArrayOutputStream;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Objects;
 
 public class QuestionDetailListAdapter extends BaseAdapter {
 
@@ -36,7 +34,6 @@ public class QuestionDetailListAdapter extends BaseAdapter {
     Button likeButton;
     DatabaseReference mDatabaseReference;
     DatabaseReference likeRef;
-    DatabaseReference mLikeRef;
     String uid;
     String name;
     String body;
@@ -102,49 +99,45 @@ public class QuestionDetailListAdapter extends BaseAdapter {
                 imageView.setImageBitmap(image);
             }
 
+            uid = user.getUid();
+            mDatabaseReference = FirebaseDatabase.getInstance().getReference();
+            likeRef = mDatabaseReference.child(Const.LikesPATH).child(uid).child(mQustion.getQuestionUid());
+
             // ボタンの追加
-            likeButton = (Button) convertView.findViewById(R.id.likeButton);
-            likeButton.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    // 保存のイメージは、Likesテーブルに各ユーザーごとのお気に入りcontentsを保存するイメージです。
-                    if (user != null) {
-                        uid = user.getUid();
-                        mDatabaseReference = FirebaseDatabase.getInstance().getReference();
-                        likeRef = mDatabaseReference.child(Const.LikesPATH).child(uid).child(mQustion.getQuestionUid());
-
-//                        if (likeRef == null) {
+            if (user != null) {
+                likeButton = (Button) convertView.findViewById(R.id.likeButton);
+                likeButton.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        if (user != null) {
+//                            if (likeRef == null) {
 //                        Firebaseに保存する
-                            Map<String, Object> data = new HashMap<String, Object>();
-                            data.put("body", body);
-                            data.put("title", mQustion.getTitle());
-                            data.put("name", name);
-                            data.put("uid", uid);
+                                Map<String, Object> data = new HashMap<String, Object>();
+                                data.put("body", body);
+                                data.put("title", mQustion.getTitle());
+                                data.put("name", name);
+                                data.put("uid", uid);
 
-                            if (bytes.length != 0) {
-                                Bitmap bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.length).copy(Bitmap.Config.ARGB_8888, true);
-                                ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                                bitmap.compress(Bitmap.CompressFormat.JPEG, 80, baos);
-                                String bitmapString = Base64.encodeToString(baos.toByteArray(), Base64.DEFAULT);
-                                data.put("image", bitmapString);
-                            }
-
-                            if(mQustion.getAnswers() != null) {
-                                for (Object key : mQustion.getAnswers()) {
-                                    data.put("answer", key);
+                                if (bytes.length != 0) {
+                                    Bitmap bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.length).copy(Bitmap.Config.ARGB_8888, true);
+                                    ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                                    bitmap.compress(Bitmap.CompressFormat.JPEG, 80, baos);
+                                    String bitmapString = Base64.encodeToString(baos.toByteArray(), Base64.DEFAULT);
+                                    data.put("image", bitmapString);
                                 }
-                            }
 
+                                if (mQustion.getAnswers() != null) {
+                                    data.put("answer", mQustion.getAnswers());
+                                }
 
-                            likeRef.setValue(data);
-                            likeButton.setText("いいね!済み");
-//                        } else {
-//                            likeRef.removeValue();
-//                            likeButton.setText("いいね!");
-//                        }
+                                likeRef.setValue(data);
+//                            } else {
+                                likeRef.removeValue();
+//                            }
+                        }
                     }
-                }
-            });
+                });
+            }
             //ここまで
 
         } else {

@@ -200,10 +200,11 @@ public class MainActivity extends AppCompatActivity {
                 if (mGenre == 5 ) {
                     uid = FirebaseAuth.getInstance().getCurrentUser().getUid();
                     mGenreRef = mDatabaseReference.child(Const.LikesPATH).child(uid);
+                    mGenreRef.addChildEventListener(mEventListener);
                 } else {
                     mGenreRef = mDatabaseReference.child(Const.ContentsPATH).child(String.valueOf(mGenre));
+                    mGenreRef.addChildEventListener(mEventListener);
                 }
-                mGenreRef.addChildEventListener(mEventListener);
                 return true;
             }
         });
