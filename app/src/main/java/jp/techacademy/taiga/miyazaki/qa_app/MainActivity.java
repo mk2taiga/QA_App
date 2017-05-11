@@ -208,9 +208,10 @@ public class MainActivity extends AppCompatActivity {
                         uid = FirebaseAuth.getInstance().getCurrentUser().getUid();
                         mGenreRef = mDatabaseReference.child(Const.LikesPATH).child(uid);
                     }else {
-                        // ログインしていなければログイン画面に遷移させる
-                        Intent intent = new Intent(getApplicationContext(), LoginActivity.class);
-                        startActivity(intent);
+//                        // ログインしていなければログイン画面に遷移させる
+//                        Intent intent = new Intent(getApplicationContext(), LoginActivity.class);
+//                        startActivity(intent);
+                        return false;
                     }
                 } else {
                     mGenreRef = mDatabaseReference.child(Const.ContentsPATH).child(String.valueOf(mGenre));
