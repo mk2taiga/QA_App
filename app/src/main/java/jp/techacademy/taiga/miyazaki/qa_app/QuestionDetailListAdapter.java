@@ -39,6 +39,7 @@ public class QuestionDetailListAdapter extends BaseAdapter {
     String body;
     byte[] bytes;
     FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+    private boolean flag = false;
     //ここまで
 
     public QuestionDetailListAdapter(Context context, Question question) {
@@ -110,7 +111,7 @@ public class QuestionDetailListAdapter extends BaseAdapter {
                     @Override
                     public void onClick(View v) {
                         if (user != null) {
-//                            if (likeRef == null) {
+                            if (flag == false) {
 //                        Firebaseに保存する
                                 Map<String, Object> data = new HashMap<String, Object>();
                                 data.put("body", body);
@@ -124,16 +125,21 @@ public class QuestionDetailListAdapter extends BaseAdapter {
                                     bitmap.compress(Bitmap.CompressFormat.JPEG, 80, baos);
                                     String bitmapString = Base64.encodeToString(baos.toByteArray(), Base64.DEFAULT);
                                     data.put("image", bitmapString);
+
                                 }
 
-                                if (mQustion.getAnswers() != null) {
-                                    data.put("answer", mQustion.getAnswers());
-                                }
+//                                if (mQustion.getAnswers() != null) {
+//                                    data.put("answer", mQustion.getAnswers());
+//                                }
 
                                 likeRef.setValue(data);
-//                            } else {
+                                flag = true;
+                                likeButton.setText("いいね!済み");
+                            } else {
                                 likeRef.removeValue();
-//                            }
+                                likeButton.setText("いいね");
+                                flag = false;
+                            }
                         }
                     }
                 });

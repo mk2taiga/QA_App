@@ -48,9 +48,11 @@ public class QuestionsListAdapter extends BaseAdapter{
         TextView nameText = (TextView) convertView.findViewById(R.id.nameTextView);
         nameText.setText(mQuestionArrayList.get(position).getName());
 
-        TextView resText = (TextView) convertView.findViewById(R.id.resTextView);
-        int resNum = mQuestionArrayList.get(position).getAnswers().size();
-        resText.setText(String.valueOf(resNum));
+        if (mQuestionArrayList.get(position).getGenre() != 5) {
+            TextView resText = (TextView) convertView.findViewById(R.id.resTextView);
+            int resNum = mQuestionArrayList.get(position).getAnswers().size();
+            resText.setText(String.valueOf(resNum));
+        }
 
         byte[] bytes = mQuestionArrayList.get(position).getImageBytes();
         if (bytes.length != 0) {

@@ -128,6 +128,8 @@ public class MainActivity extends AppCompatActivity {
         mToolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(mToolbar);
 
+        user = FirebaseAuth.getInstance().getCurrentUser();
+
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -138,13 +140,13 @@ public class MainActivity extends AppCompatActivity {
                     return;
                 }
 
-                // ログイン済みのユーザーを取得する
-                user = FirebaseAuth.getInstance().getCurrentUser();
-
                 if (user == null) {
                     // ログインしていなければログイン画面に遷移させる
                     Intent intent = new Intent(getApplicationContext(), LoginActivity.class);
                     startActivity(intent);
+                } else if (mGenre == 5) {
+                    Snackbar.make(view, "ジャンルを選択して下さい", Snackbar.LENGTH_LONG).show();
+                    return;
                 } else {
                     // ジャンルを渡して質問作成画面を起動する
                     Intent intent = new Intent(getApplicationContext(), QuestionSendActivity.class);
@@ -160,7 +162,10 @@ public class MainActivity extends AppCompatActivity {
         drawer.addDrawerListener(toggle);
         toggle.syncState();
 
-        NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
+        NavigationView navigationView;
+
+        navigationView = (NavigationView) findViewById(R.id.nav_view);
+
         navigationView.setNavigationItemSelectedListener(new NavigationView.OnNavigationItemSelectedListener() {
             @Override
             public boolean onNavigationItemSelected(MenuItem item) {
@@ -179,10 +184,11 @@ public class MainActivity extends AppCompatActivity {
                 } else if (id == R.id.nav_compter) {
                     mToolbar.setTitle("コンピューター");
                     mGenre = 4;
-                }if (id == R.id.nav_like) {
+                }else if (id == R.id.nav_like) {
                     mToolbar.setTitle("お気に入り");
                     mGenre = 5;
                 }
+
 
                 DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
                 drawer.closeDrawer(GravityCompat.START);
@@ -197,14 +203,19 @@ public class MainActivity extends AppCompatActivity {
                     mGenreRef.removeEventListener(mEventListener);
                 }
                 //お気に入りを選択した時のみ、mGenreRefに代入するものを変更する。
-                if (mGenre == 5 ) {
-                    uid = FirebaseAuth.getInstance().getCurrentUser().getUid();
-                    mGenreRef = mDatabaseReference.child(Const.LikesPATH).child(uid);
-                    mGenreRef.addChildEventListener(mEventListener);
+                if (mGenre == 5) {
+                    if (user != null) {
+                        uid = FirebaseAuth.getInstance().getCurrentUser().getUid();
+                        mGenreRef = mDatabaseReference.child(Const.LikesPATH).child(uid);
+                    }else {
+                        // ログインしていなければログイン画面に遷移させる
+                        Intent intent = new Intent(getApplicationContext(), LoginActivity.class);
+                        startActivity(intent);
+                    }
                 } else {
                     mGenreRef = mDatabaseReference.child(Const.ContentsPATH).child(String.valueOf(mGenre));
-                    mGenreRef.addChildEventListener(mEventListener);
                 }
+                mGenreRef.addChildEventListener(mEventListener);
                 return true;
             }
         });
@@ -222,9 +233,11 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 // Questionのインスタンスを渡して質問詳細画面を起動する
-                Intent intent = new Intent(getApplicationContext(), QuestionDetailActivity.class);
-                intent.putExtra("question", mQuestionArrayList.get(position));
-                startActivity(intent);
+                if (mGenre != 5) {
+                    Intent intent = new Intent(getApplicationContext(), QuestionDetailActivity.class);
+                    intent.putExtra("question", mQuestionArrayList.get(position));
+                    startActivity(intent);
+                }
             }
         });
     }
