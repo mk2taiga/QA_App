@@ -14,13 +14,12 @@ public class Like implements Serializable{
     private byte[] mBitmapArray;
     private ArrayList<Answer> mAnswerArrayList;
 
-    public Like(String title, String body, String name, String uid, byte[] bytes, ArrayList<Answer> answers) {
+    public Like(String title, String body, String name, String uid, byte[] bytes) {
         mTitle = title;
         mBody = body;
         mName = name;
         mUid = uid;
         mBitmapArray = bytes.clone();
-        mAnswerArrayList = answers;
     }
 
     public String getTitle() {
@@ -41,10 +40,6 @@ public class Like implements Serializable{
 
     public byte[] getImageBytes() {
         return mBitmapArray;
-    }
-
-    public ArrayList<Answer> getAnswers() {
-        return mAnswerArrayList;
     }
 
 

@@ -3,8 +3,6 @@ package jp.techacademy.taiga.miyazaki.qa_app;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.util.Base64;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -14,15 +12,8 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
-
-import java.io.ByteArrayOutputStream;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 public class QuestionDetailListAdapter extends BaseAdapter {
 
@@ -31,17 +22,16 @@ public class QuestionDetailListAdapter extends BaseAdapter {
 
     private LayoutInflater mLayoutInflater = null;
     private Question mQustion;
+
     //ボタンの宣言
     Button likeButton;
     DatabaseReference mDatabaseReference;
     DatabaseReference likeRef;
-    String questionUid;
+    DatabaseReference mLikeRef;
     String uid;
     String name;
     String body;
-    String title;
     byte[] bytes;
-    boolean flag = false;
     //ここまで
 
     public QuestionDetailListAdapter(Context context, Question question) {
@@ -85,10 +75,6 @@ public class QuestionDetailListAdapter extends BaseAdapter {
             if (convertView == null) {
                 convertView = mLayoutInflater.inflate(R.layout.list_question_detail, parent, false);
             }
-            //追加
-            title = mQustion.getTitle();
-            questionUid = mQustion.getQuestionUid();
-            //
             bytes = mQustion.getImageBytes();
             body = mQustion.getBody();
             name = mQustion.getName();
@@ -107,33 +93,17 @@ public class QuestionDetailListAdapter extends BaseAdapter {
                   // 保存のイメージは、Likesテーブルに各ユーザーごとのお気に入りcontentsを保存するイメージです。
                     uid = FirebaseAuth.getInstance().getCurrentUser().getUid();
                     mDatabaseReference = FirebaseDatabase.getInstance().getReference();
-                    likeRef = mDatabaseReference.child(Const.LikesPATH).child(uid);
-
-                    if (flag == false) {
-                        Map<String, String> data = new HashMap<String, String>();
-
-                        data.put("title", title);
-                        data.put("body", body);
-                        data.put("name", name);
-                        data.put("uid", uid);
-                        data.put("question", questionUid);
-
-                        if (bytes != null) {
-                            Bitmap bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.length).copy(Bitmap.Config.ARGB_8888, true);
-                            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                            bitmap.compress(Bitmap.CompressFormat.JPEG, 80, baos);
-                            String bitmapString = Base64.encodeToString(baos.toByteArray(), Base64.DEFAULT);
-                            data.put("image", bitmapString);
-                        }
-
-                        likeRef.push().setValue(data);
+                    likeRef = mDatabaseReference.child(Const.LikesPATH).child(uid).child(mQustion.getQuestionUid());
+                    mLikeRef = mDatabaseReference.child(Const.LikesPATH).child(uid);
+                    if (likeRef == null) {
+//                        Firebaseに保存する
+                        //一つずつデータを取り出すという方法もやってはみましたが、answerまでを保存することはできなかった。
+                        // ユーザーid直下にコンテンツidを保存することができず、現在に至っています。
+                        mLikeRef.push(mQustion);
                         likeButton.setText("いいね!済み");
-                        flag = true;
-
-                    }else if (flag == true) {
+                    }else  {
                         likeRef.removeValue();
                         likeButton.setText("いいね!");
-                        flag =false;
                     }
                 }
             });

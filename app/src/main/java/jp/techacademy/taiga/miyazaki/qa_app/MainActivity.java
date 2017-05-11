@@ -165,6 +165,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public boolean onNavigationItemSelected(MenuItem item) {
                 int id = item.getItemId();
+                user = FirebaseAuth.getInstance().getCurrentUser();
 
                 if (id == R.id.nav_hobby) {
                     mToolbar.setTitle("趣味");
@@ -178,11 +179,9 @@ public class MainActivity extends AppCompatActivity {
                 } else if (id == R.id.nav_compter) {
                     mToolbar.setTitle("コンピューター");
                     mGenre = 4;
-                } else if (id == R.id.nav_like) {
-                    if (user != null) {
-                        mToolbar.setTitle("お気に入り");
-                        mGenre = 5;
-                    }
+                }if (id == R.id.nav_like) {
+                    mToolbar.setTitle("お気に入り");
+                    mGenre = 5;
                 }
 
                 DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
@@ -198,7 +197,7 @@ public class MainActivity extends AppCompatActivity {
                     mGenreRef.removeEventListener(mEventListener);
                 }
                 //お気に入りを選択した時のみ、mGenreRefに代入するものを変更する。
-                if (mGenre == 5) {
+                if (mGenre == 5 ) {
                     uid = FirebaseAuth.getInstance().getCurrentUser().getUid();
                     mGenreRef = mDatabaseReference.child(Const.LikesPATH).child(uid);
                 } else {
