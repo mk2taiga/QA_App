@@ -47,20 +47,24 @@ public class LoginActivity extends AppCompatActivity {
         setContentView(R.layout.activity_login);
 
         mDataBaseReference = FirebaseDatabase.getInstance().getReference();
+
         // FirebaseAuthのオブジェクトを取得する
         mAuth = FirebaseAuth.getInstance();
 
-        //アカウント作成処理のリスナー
+        // アカウント作成処理のリスナー
         mCreateAccountListener = new OnCompleteListener<AuthResult>() {
             @Override
             public void onComplete(Task<AuthResult> task) {
                 if (task.isSuccessful()) {
-                    //成功した場合ログインを行う
+                    // 成功した場合
+                    // ログインを行う
                     String email = mEmailEditText.getText().toString();
                     String password = mPasswordEditText.getText().toString();
                     login(email, password);
-                }else {
-                    //失敗した場合エラーを表示する
+                } else {
+
+                    // 失敗した場合
+                    // エラーを表示する
                     View view = findViewById(android.R.id.content);
                     Snackbar.make(view, "アカウント作成に失敗しました", Snackbar.LENGTH_LONG).show();
 
@@ -70,13 +74,13 @@ public class LoginActivity extends AppCompatActivity {
             }
         };
 
-        //ログイン処理のリスナー
+        // ログイン処理のリスナー
         mLoginListener = new OnCompleteListener<AuthResult>() {
             @Override
             public void onComplete(Task<AuthResult> task) {
 
                 if (task.isSuccessful()) {
-                    //成功した場合
+                    // 成功した場合
                     FirebaseUser user = mAuth.getCurrentUser();
                     DatabaseReference userRef = mDataBaseReference.child(Const.UsersPATH).child(user.getUid());
 
@@ -84,32 +88,33 @@ public class LoginActivity extends AppCompatActivity {
                         // アカウント作成の時は表示名をFirebaseに保存する
                         String name = mNameEditText.getText().toString();
 
+
                         Map<String, String> data = new HashMap<String, String>();
                         data.put("name", name);
                         userRef.setValue(data);
 
                         // 表示名をPrefarenceに保存する
                         saveName(name);
-                    }else {
+                    } else {
                         userRef.addListenerForSingleValueEvent(new ValueEventListener() {
                             @Override
                             public void onDataChange(DataSnapshot snapshot) {
-                                Map data = snapshot.getValue(Map.class);
+                                Map data = (Map) snapshot.getValue();
                                 saveName((String)data.get("name"));
                             }
-
                             @Override
-                            public void onCancelled(DatabaseError databaseError) {
-
+                            public void onCancelled(DatabaseError firebaseError) {
                             }
                         });
                     }
+
                     // プログレスダイアログを非表示にする
                     mProgress.dismiss();
 
                     // Activityを閉じる
                     finish();
-                }else {
+
+                } else {
                     // 失敗した場合
                     // エラーを表示する
                     View view = findViewById(android.R.id.content);
@@ -179,7 +184,7 @@ public class LoginActivity extends AppCompatActivity {
         });
     }
 
-    public void createAccount(String email, String password) {
+    private void createAccount(String email, String password) {
         // プログレスダイアログを表示する
         mProgress.show();
 
@@ -187,7 +192,7 @@ public class LoginActivity extends AppCompatActivity {
         mAuth.createUserWithEmailAndPassword(email, password).addOnCompleteListener(mCreateAccountListener);
     }
 
-    public void login(String email, String password) {
+    private void login(String email, String password) {
         // プログレスダイアログを表示する
         mProgress.show();
 
@@ -195,7 +200,7 @@ public class LoginActivity extends AppCompatActivity {
         mAuth.signInWithEmailAndPassword(email, password).addOnCompleteListener(mLoginListener);
     }
 
-    public void saveName(String name) {
+    private void saveName(String name) {
         // Preferenceに保存する
         SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
         SharedPreferences.Editor editor = sp.edit();
