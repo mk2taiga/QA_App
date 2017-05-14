@@ -28,12 +28,13 @@ public class QuestionDetailListAdapter extends BaseAdapter {
     private final static int TYPE_ANSWER = 1;
 
     private LayoutInflater mLayoutInflater = null;
-    private Question mQustion;
+    private Question mQuestion;
 
     //ボタンの宣言
     Button likeButton;
     DatabaseReference mDatabaseReference;
     DatabaseReference likeRef;
+    DatabaseReference likeRef2;
     String uid;
     String name;
     String body;
@@ -44,12 +45,12 @@ public class QuestionDetailListAdapter extends BaseAdapter {
 
     public QuestionDetailListAdapter(Context context, Question question) {
         mLayoutInflater = (LayoutInflater)context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-        mQustion = question;
+        mQuestion = question;
     }
 
     @Override
     public int getCount() {
-        return 1 + mQustion.getAnswers().size();
+        return 1 + mQuestion.getAnswers().size();
     }
 
     @Override
@@ -69,7 +70,7 @@ public class QuestionDetailListAdapter extends BaseAdapter {
 
     @Override
     public Object getItem(int position) {
-        return mQustion;
+        return mQuestion;
     }
 
     @Override
@@ -84,9 +85,9 @@ public class QuestionDetailListAdapter extends BaseAdapter {
                 convertView = mLayoutInflater.inflate(R.layout.list_question_detail, parent, false);
             }
 
-            bytes = mQustion.getImageBytes();
-            body = mQustion.getBody();
-            name = mQustion.getName();
+            bytes = mQuestion.getImageBytes();
+            body = mQuestion.getBody();
+            name = mQuestion.getName();
 
             TextView bodyTextView = (TextView) convertView.findViewById(R.id.bodyTextView);
             bodyTextView.setText(body);
@@ -102,7 +103,8 @@ public class QuestionDetailListAdapter extends BaseAdapter {
 
             uid = user.getUid();
             mDatabaseReference = FirebaseDatabase.getInstance().getReference();
-            likeRef = mDatabaseReference.child(Const.LikesPATH).child(uid).child(mQustion.getQuestionUid());
+            likeRef = mDatabaseReference.child(Const.LikesPATH).child(uid).child(mQuestion.getQuestionUid());
+            likeRef2 = mDatabaseReference.child(Const.ContentsPATH).child(String.valueOf(mQuestion.getGenre())).child(mQuestion.getQuestionUid()).child(Const.LikesPATH);
 
             // ボタンの追加
             if (user != null) {
@@ -115,7 +117,7 @@ public class QuestionDetailListAdapter extends BaseAdapter {
 //                        Firebaseに保存する
                                 Map<String, Object> data = new HashMap<String, Object>();
                                 data.put("body", body);
-                                data.put("title", mQustion.getTitle());
+                                data.put("title", mQuestion.getTitle());
                                 data.put("name", name);
                                 data.put("uid", uid);
 
@@ -131,14 +133,15 @@ public class QuestionDetailListAdapter extends BaseAdapter {
 //                                if (mQustion.getAnswers() != null) {
 //                                    data.put("answer", mQustion.getAnswers());
 //                                }
+                                Map<String, String> data2 = new HashMap<String, String>();
+                                data2.put("uid", uid);
 
                                 likeRef.setValue(data);
-                                flag = true;
+                                likeRef2.setValue(data2);
                                 likeButton.setText("いいね!済み");
                             } else {
                                 likeRef.removeValue();
                                 likeButton.setText("いいね");
-                                flag = false;
                             }
                         }
                     }
@@ -151,7 +154,7 @@ public class QuestionDetailListAdapter extends BaseAdapter {
                 convertView = mLayoutInflater.inflate(R.layout.list_answer, parent, false);
             }
 
-            Answer answer = mQustion.getAnswers().get(position - 1);
+            Answer answer = mQuestion.getAnswers().get(position - 1);
             String body = answer.getBody();
             String name = answer.getName();
 
