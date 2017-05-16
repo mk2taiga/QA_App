@@ -4,6 +4,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.support.v4.widget.SwipeRefreshLayout;
 import android.util.Base64;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -15,12 +16,20 @@ import android.widget.TextView;
 
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.ChildEventListener;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 
 import java.io.ByteArrayOutputStream;
+import java.security.Key;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
+
+import static android.R.attr.key;
+import static android.R.attr.keySet;
 
 public class QuestionDetailListAdapter extends BaseAdapter {
 
@@ -31,16 +40,17 @@ public class QuestionDetailListAdapter extends BaseAdapter {
     private Question mQuestion;
 
     //ボタンの宣言
-    Button likeButton;
-    DatabaseReference mDatabaseReference;
-    DatabaseReference likeRef;
-    DatabaseReference likeRef2;
-    String uid;
-    String name;
-    String body;
+    private Favorite mFavorite;
+    private String favoriteUid;
+    private Button favoriteButton;
+    private DatabaseReference mDatabaseReference;
+    private DatabaseReference favoriteRef;
+    private String uid;
+    private String name;
+    private String body;
+    private boolean flag = false;
     byte[] bytes;
     FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
-    private boolean flag = false;
     //ここまで
 
     public QuestionDetailListAdapter(Context context, Question question) {
@@ -91,61 +101,34 @@ public class QuestionDetailListAdapter extends BaseAdapter {
 
             TextView bodyTextView = (TextView) convertView.findViewById(R.id.bodyTextView);
             bodyTextView.setText(body);
-
             TextView nameTextView = (TextView) convertView.findViewById(R.id.nameTextView);
             nameTextView.setText(name);
-
             if (bytes.length != 0) {
                 Bitmap image = BitmapFactory.decodeByteArray(bytes, 0, bytes.length).copy(Bitmap.Config.ARGB_8888, true);
                 ImageView imageView = (ImageView) convertView.findViewById(R.id.imageView);
                 imageView.setImageBitmap(image);
             }
 
+            //ここから
             uid = user.getUid();
             mDatabaseReference = FirebaseDatabase.getInstance().getReference();
-            likeRef = mDatabaseReference.child(Const.LikesPATH).child(uid).child(mQuestion.getQuestionUid());
-            likeRef2 = mDatabaseReference.child(Const.ContentsPATH).child(String.valueOf(mQuestion.getGenre())).child(mQuestion.getQuestionUid()).child(Const.LikesPATH);
-
-            // ボタンの追加
-            if (user != null) {
-                likeButton = (Button) convertView.findViewById(R.id.likeButton);
-                likeButton.setOnClickListener(new View.OnClickListener() {
+            favoriteButton = (Button) convertView.findViewById(R.id.favoriteButton);
+            if (user == null) {
+                favoriteButton.setVisibility(View.GONE);
+            }else {
+                favoriteRef = mDatabaseReference.child(Const.FavoritePATH).child(uid);
+                favoriteButton.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
-                        if (user != null) {
-                            if (flag == false) {
-//                        Firebaseに保存する
-                                Map<String, Object> data = new HashMap<String, Object>();
-                                data.put("body", body);
-                                data.put("title", mQuestion.getTitle());
-                                data.put("name", name);
-                                data.put("uid", uid);
-
-                                if (bytes.length != 0) {
-                                    Bitmap bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.length).copy(Bitmap.Config.ARGB_8888, true);
-                                    ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                                    bitmap.compress(Bitmap.CompressFormat.JPEG, 80, baos);
-                                    String bitmapString = Base64.encodeToString(baos.toByteArray(), Base64.DEFAULT);
-                                    data.put("image", bitmapString);
-
-                                }
-
-//                                if (mQustion.getAnswers() != null) {
-//                                    data.put("answer", mQustion.getAnswers());
-//                                }
-                                Map<String, String> data2 = new HashMap<String, String>();
-                                data2.put("uid", uid);
-
-                                likeRef.setValue(data);
-                                likeRef2.setValue(data2);
-                                likeButton.setText("いいね!済み");
-                            } else {
-                                likeRef.removeValue();
-                                likeButton.setText("いいね");
-                            }
+                        // ログイン済みのユーザーを収録する
+                        if (flag == false) {
+                            favoriteAdd();
+                        }else {
+                            favoriteRemove();
                         }
                     }
                 });
+                favoriteRef.addChildEventListener(mEventListener);
             }
             //ここまで
 
@@ -167,4 +150,61 @@ public class QuestionDetailListAdapter extends BaseAdapter {
 
         return convertView;
     }
+
+    public void favoriteAdd() {
+        favoriteRef = mDatabaseReference.child(Const.FavoritePATH).child(uid);
+        Map<String, Object> data = new HashMap<String, Object>();
+        data.put("questionUid", mQuestion.getQuestionUid());
+        favoriteRef.push().setValue(data);
+    }
+
+    public void favoriteRemove() {
+        favoriteRef = mDatabaseReference.child(Const.FavoritePATH).child(uid).child(mFavorite.getFavoriteUid());
+        favoriteRef.removeValue();
+        favoriteButton.setText("いいね");
+        flag = true;
+    }
+
+    private ChildEventListener mEventListener = new ChildEventListener() {
+        @Override
+        public void onChildAdded(DataSnapshot dataSnapshot, String s) {
+            HashMap map = (HashMap) dataSnapshot.getValue();
+            favoriteUid = dataSnapshot.getKey();
+
+            String uid2 = uid;
+            String questionUid2 = (String) map.get("questionUid");
+
+            if (questionUid2.equals(mQuestion.getQuestionUid())) {
+                flag = true;
+                favoriteButton.setText("いいね済み");
+            } else {
+                flag = false;
+            }
+
+            mFavorite = new Favorite(uid2, questionUid2, favoriteUid);
+
+        }
+
+        @Override
+        public void onChildChanged(DataSnapshot dataSnapshot, String s) {
+
+
+        }
+
+        @Override
+        public void onChildRemoved(DataSnapshot dataSnapshot) {
+
+        }
+
+        @Override
+        public void onChildMoved(DataSnapshot dataSnapshot, String s) {
+
+        }
+
+        @Override
+        public void onCancelled(DatabaseError databaseError) {
+
+        }
+    };
+
 }

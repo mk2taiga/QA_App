@@ -1,8 +1,6 @@
 package jp.techacademy.taiga.miyazaki.qa_app;
 
 import android.content.Intent;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.NavigationView;
@@ -40,9 +38,7 @@ public class MainActivity extends AppCompatActivity {
     private ListView mListView;
     private ArrayList<Question> mQuestionArrayList;
     private QuestionsListAdapter mAdapter;
-    FirebaseUser user;
-    //
-    String uid;
+    private FirebaseUser user;
 
     private ChildEventListener mEventListener = new ChildEventListener() {
         @Override
@@ -128,8 +124,6 @@ public class MainActivity extends AppCompatActivity {
         mToolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(mToolbar);
 
-        user = FirebaseAuth.getInstance().getCurrentUser();
-
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -140,37 +134,35 @@ public class MainActivity extends AppCompatActivity {
                     return;
                 }
 
+                // ログイン済みのユーザーを取得する
+                user = FirebaseAuth.getInstance().getCurrentUser();
+
                 if (user == null) {
                     // ログインしていなければログイン画面に遷移させる
                     Intent intent = new Intent(getApplicationContext(), LoginActivity.class);
                     startActivity(intent);
-                } else if (mGenre == 5) {
-                    Snackbar.make(view, "ジャンルを選択して下さい", Snackbar.LENGTH_LONG).show();
-                    return;
                 } else {
                     // ジャンルを渡して質問作成画面を起動する
                     Intent intent = new Intent(getApplicationContext(), QuestionSendActivity.class);
                     intent.putExtra("genre", mGenre);
                     startActivity(intent);
                 }
+
             }
         });
 
-        //ナビゲーションドロワーの設定
+        // ナビゲーションドロワーの設定
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(this, drawer, mToolbar, R.string.app_name, R.string.app_name);
         drawer.addDrawerListener(toggle);
         toggle.syncState();
 
-        NavigationView navigationView;
-
-        navigationView = (NavigationView) findViewById(R.id.nav_view);
-
+        final NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(new NavigationView.OnNavigationItemSelectedListener() {
             @Override
             public boolean onNavigationItemSelected(MenuItem item) {
+                FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
                 int id = item.getItemId();
-                user = FirebaseAuth.getInstance().getCurrentUser();
 
                 if (id == R.id.nav_hobby) {
                     mToolbar.setTitle("趣味");
@@ -184,15 +176,22 @@ public class MainActivity extends AppCompatActivity {
                 } else if (id == R.id.nav_compter) {
                     mToolbar.setTitle("コンピューター");
                     mGenre = 4;
-                }else if (id == R.id.nav_like) {
-                    mToolbar.setTitle("お気に入り");
-                    mGenre = 5;
+                } else if (id == R.id.nav_favorite) {
+                    Intent intent = new Intent(getApplicationContext(), FavoriteActivity.class);
+                    startActivity(intent);
+//                    if (user == null) {
+//                        Intent intent = new Intent(getApplicationContext(), LoginActivity.class);
+//                        startActivity(intent);
+//                    }else {
+//                        Intent intent = new Intent(getApplicationContext(), FavoriteActivity.class);
+//                        startActivity(intent);
+//                    }
                 }
-
 
                 DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
                 drawer.closeDrawer(GravityCompat.START);
 
+                // --- ここから ---
                 // 質問のリストをクリアしてから再度Adapterにセットし、AdapterをListViewにセットし直す
                 mQuestionArrayList.clear();
                 mAdapter.setQuestionArrayList(mQuestionArrayList);
@@ -202,23 +201,16 @@ public class MainActivity extends AppCompatActivity {
                 if (mGenreRef != null) {
                     mGenreRef.removeEventListener(mEventListener);
                 }
-                //お気に入りを選択した時のみ、mGenreRefに代入するものを変更する。
-                if (mGenre == 5) {
-                    if (user != null) {
-                        uid = FirebaseAuth.getInstance().getCurrentUser().getUid();
-                        mGenreRef = mDatabaseReference.child(Const.LikesPATH).child(uid);
-                    }else {
-                        // ログインしていなければログイン画面に遷移させる
-                        Intent intent = new Intent(getApplicationContext(), LoginActivity.class);
-                        startActivity(intent);
-                    }
-                } else {
-                    mGenreRef = mDatabaseReference.child(Const.ContentsPATH).child(String.valueOf(mGenre));
-                }
+
+
+                mGenreRef = mDatabaseReference.child(Const.ContentsPATH).child(String.valueOf(mGenre));
                 mGenreRef.addChildEventListener(mEventListener);
+
                 return true;
+
             }
         });
+
 
         // Firebase
         mDatabaseReference = FirebaseDatabase.getInstance().getReference();
@@ -233,11 +225,10 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 // Questionのインスタンスを渡して質問詳細画面を起動する
-                if (mGenre != 5) {
-                    Intent intent = new Intent(getApplicationContext(), QuestionDetailActivity.class);
-                    intent.putExtra("question", mQuestionArrayList.get(position));
-                    startActivity(intent);
-                }
+                Intent intent = new Intent(getApplicationContext(), QuestionDetailActivity.class);
+                intent.putExtra("question", mQuestionArrayList.get(position));
+                startActivity(intent);
+
             }
         });
     }
