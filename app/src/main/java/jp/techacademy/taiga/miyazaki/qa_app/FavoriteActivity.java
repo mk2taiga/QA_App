@@ -37,8 +37,7 @@ public class FavoriteActivity extends AppCompatActivity {
             favoriteUid = dataSnapshot.getKey();
             HashMap map = (HashMap) dataSnapshot.getValue();
             String questionUid = (String) map.get("questionUid");
-            String uid = user.getUid();
-            Favorite favorite = new Favorite(uid, questionUid, favoriteUid);
+            Favorite favorite = new Favorite(questionUid, favoriteUid);
             mFavoriteArrayList.add(favorite);
         }
 

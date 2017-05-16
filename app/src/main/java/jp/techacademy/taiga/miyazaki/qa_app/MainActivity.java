@@ -177,15 +177,15 @@ public class MainActivity extends AppCompatActivity {
                     mToolbar.setTitle("コンピューター");
                     mGenre = 4;
                 } else if (id == R.id.nav_favorite) {
-                    Intent intent = new Intent(getApplicationContext(), FavoriteActivity.class);
-                    startActivity(intent);
-//                    if (user == null) {
-//                        Intent intent = new Intent(getApplicationContext(), LoginActivity.class);
-//                        startActivity(intent);
-//                    }else {
-//                        Intent intent = new Intent(getApplicationContext(), FavoriteActivity.class);
-//                        startActivity(intent);
-//                    }
+//                    Intent intent = new Intent(getApplicationContext(), FavoriteActivity.class);
+//                    startActivity(intent);
+                    if (user == null) {
+                        Intent intent = new Intent(getApplicationContext(), LoginActivity.class);
+                        startActivity(intent);
+                    }else {
+                        Intent intent = new Intent(getApplicationContext(), FavoriteActivity.class);
+                        startActivity(intent);
+                    }
                 }
 
                 DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);

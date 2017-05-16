@@ -4,6 +4,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.support.design.widget.Snackbar;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.util.Base64;
 import android.view.LayoutInflater;
@@ -120,7 +121,6 @@ public class QuestionDetailListAdapter extends BaseAdapter {
                 favoriteButton.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
-                        // ログイン済みのユーザーを収録する
                         if (flag == false) {
                             favoriteAdd();
                         }else {
@@ -161,8 +161,7 @@ public class QuestionDetailListAdapter extends BaseAdapter {
     public void favoriteRemove() {
         favoriteRef = mDatabaseReference.child(Const.FavoritePATH).child(uid).child(mFavorite.getFavoriteUid());
         favoriteRef.removeValue();
-        favoriteButton.setText("いいね");
-        flag = true;
+        favoriteRef.addChildEventListener(mEventListener);
     }
 
     private ChildEventListener mEventListener = new ChildEventListener() {
@@ -171,17 +170,16 @@ public class QuestionDetailListAdapter extends BaseAdapter {
             HashMap map = (HashMap) dataSnapshot.getValue();
             favoriteUid = dataSnapshot.getKey();
 
-            String uid2 = uid;
             String questionUid2 = (String) map.get("questionUid");
 
             if (questionUid2.equals(mQuestion.getQuestionUid())) {
                 flag = true;
                 favoriteButton.setText("いいね済み");
-            } else {
+            }else {
                 flag = false;
             }
 
-            mFavorite = new Favorite(uid2, questionUid2, favoriteUid);
+            mFavorite = new Favorite(questionUid2, favoriteUid);
 
         }
 
@@ -193,7 +191,9 @@ public class QuestionDetailListAdapter extends BaseAdapter {
 
         @Override
         public void onChildRemoved(DataSnapshot dataSnapshot) {
-
+            favoriteButton.setText("いいね");
+            flag = false;
+            mFavorite = new Favorite(null, null);
         }
 
         @Override
